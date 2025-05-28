@@ -226,6 +226,12 @@ class OnlineRunView:
         """
         key = (table_nm, file_name)
         
+        # current와 total이 None인 경우 기본값 설정
+        if current is None:
+            current = 0
+        if total is None:
+            total = 100
+            
         # 테이블별 파일 개수 관리
         if table_nm not in self.table_file_counts:
             # 해당 테이블의 총 파일 개수 조회
@@ -248,8 +254,11 @@ class OnlineRunView:
         current_file_num = self.table_current_file_index.get(table_nm, 1)
         total_files = self.table_file_counts.get(table_nm, 1)
         
-        # 진행률 계산 (0-100%)
-        progress_value = min(100, max(0, current))
+        # 진행률 계산 (0-100%) - None 체크 추가
+        try:
+            progress_value = min(100, max(0, int(current) if current is not None else 0))
+        except (ValueError, TypeError):
+            progress_value = 0
         
         # 상태에 따른 색상 설정
         if status == "진행 중":
@@ -284,8 +293,8 @@ class OnlineRunView:
             
             # 데이터 상태 업데이트
             self.progress_data[key].update({
-                "current": current,
-                "total": total,
+                "current": current if current is not None else 0,
+                "total": total if total is not None else 100,
                 "progress": progress_value
             })
         
@@ -328,8 +337,8 @@ class OnlineRunView:
             self.progress_bars[key] = progress_outer
             self.progress_indicators[key] = progress_inner
             self.progress_data[key] = {
-                "current": current,
-                "total": total,
+                "current": current if current is not None else 0,
+                "total": total if total is not None else 100,
                 "progress": progress_value,
                 "file_order_label": lbl_file_order
             }

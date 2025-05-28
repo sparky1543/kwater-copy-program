@@ -8,3 +8,55 @@
 2025-05-28 13:36:39,626 [INFO] - root - 애플리케이션 시작
 2025-05-28 13:36:44,090 [INFO] - root - 애플리케이션 종료
 2025-05-28 13:36:44,246 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:45:29,425 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:45:29,428 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:45:29,429 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:45:44,269 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:45:44,295 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:45:44,308 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:45:44,322 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:46:03,792 [INFO] - root - 애플리케이션 종료
+2025-05-28 13:46:03,985 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:46:03,988 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:46:03,989 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:47:40,979 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:47:40,982 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:47:40,982 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:47:54,823 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:47:54,844 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:47:54,857 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:47:54,873 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:49:22,260 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:49:22,263 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:49:22,264 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:54:09,874 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:54:09,876 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:54:09,877 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:54:22,404 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:54:22,423 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:54:22,432 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:54:22,451 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:54:56,636 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:54:56,639 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:54:56,639 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:55:11,405 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:55:11,444 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:55:11,455 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:55:11,476 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:56:13,896 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:56:13,901 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:56:13,903 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:56:51,965 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:56:51,967 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:56:51,968 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:56:56,702 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:56:56,705 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:56:56,706 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 13:57:11,285 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:57:11,315 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:57:11,327 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-28 13:57:11,343 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-28 13:57:27,013 [INFO] - root - 애플리케이션 종료
+2025-05-28 13:57:27,267 [INFO] - root - 애플리케이션 시작
+2025-05-28 13:57:27,272 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 13:57:27,273 [INFO] - root - SQLite 연결 테스트 성공

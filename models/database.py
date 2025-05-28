@@ -111,7 +111,52 @@ class DatabaseManager:
             commit (bool, optional): 변경사항 즉시 커밋 여부. Defaults to False.
             
         Returns:
-            list: 쿼리 결과 행 목록
+            list: 쿼리 결과 행 목록 (SELECT인 경우) 또는 빈 리스트 (기타)
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+            
+            # 쿼리 타입에 관계없이 fetchall() 시도
+            try:
+                result = cursor.fetchall()
+                if result is None:
+                    result = []
+            except:
+                # fetchall()이 실패하면 빈 리스트 반환
+                result = []
+                
+            if commit:
+                conn.commit()
+                
+            return result
+        except Exception as e:
+            if conn and commit:
+                conn.rollback()
+            raise e
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+    
+    def execute_non_select_query(self, query, params=None, commit=True):
+        """SELECT가 아닌 쿼리 실행 (INSERT, UPDATE, DELETE 등)
+        
+        Args:
+            query (str): 실행할 SQL 쿼리
+            params (tuple, optional): 쿼리 파라미터. Defaults to None.
+            commit (bool, optional): 변경사항 즉시 커밋 여부. Defaults to True.
+            
+        Returns:
+            int: 영향받은 행 수
         """
         conn = None
         cursor = None
@@ -124,11 +169,7 @@ class DatabaseManager:
             else:
                 cursor.execute(query)
                 
-            # SELECT 쿼리인 경우 결과 반환
-            if query.strip().upper().startswith("SELECT"):
-                result = cursor.fetchall()
-            else:
-                result = cursor.rowcount
+            result = cursor.rowcount
                 
             if commit:
                 conn.commit()
@@ -148,8 +189,7 @@ class DatabaseManager:
     # 테이블 정보 관련 함수들
     # ============================================================
     def get_table_list(self):
-        """시스템 테이블 목록 조회 (SQLite에서는 TABLE_INFO 테이블 목록 반환)"""
-        query = "SELECT TABLE_NM FROM TABLE_INFO ORDER BY TABLE_NM"
+        query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"  # 실제 테이블들
         return [row[0] for row in self.execute_query(query)]
     
     def get_table_info_list(self):
@@ -173,12 +213,73 @@ class DatabaseManager:
                 TABLE_DC = excluded.TABLE_DC,
                 TABLE_OWNERSHIP = excluded.TABLE_OWNERSHIP
         """
-        return self.execute_query(query, (table_nm, table_dc, table_ownership), commit=True)
+        return self.execute_non_select_query(query, (table_nm, table_dc, table_ownership))
     
     def delete_table_info(self, table_nm):
         """테이블 정보 삭제"""
         query = "DELETE FROM TABLE_INFO WHERE TABLE_NM = ?"
-        return self.execute_query(query, (table_nm,), commit=True)
+        return self.execute_non_select_query(query, (table_nm,))
+    
+    def save_auto_config(self, table_nm, src_path, dest_path, auto_interval, use_yn):
+        """자동화 설정 정보 저장 (DELETE_INTERVAL 제거)"""
+        query = """
+            INSERT INTO AUTO_CONFIG (TABLE_NM, SRC_PATH, DEST_PATH, AUTO_INTERVAL, USE_YN)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(TABLE_NM) DO UPDATE SET
+                SRC_PATH = excluded.SRC_PATH,
+                DEST_PATH = excluded.DEST_PATH,
+                AUTO_INTERVAL = excluded.AUTO_INTERVAL,
+                USE_YN = excluded.USE_YN
+        """
+        return self.execute_non_select_query(query, (table_nm, src_path, dest_path, auto_interval, use_yn))
+    
+    def delete_auto_config(self, table_nm):
+        """자동화 설정 정보 삭제"""
+        query = "DELETE FROM AUTO_CONFIG WHERE TABLE_NM = ?"
+        return self.execute_non_select_query(query, (table_nm,))
+    
+    def update_auto_config_timestamp(self, table_nm):
+        """마지막 실행 시간 업데이트"""
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        query = "UPDATE AUTO_CONFIG SET LAST_TIMESTAMP = ? WHERE TABLE_NM = ?"
+        return self.execute_non_select_query(query, (current_time, table_nm))
+    
+    def register_file(self, table_nm, file_nm):
+        """새 파일 정보 등록"""
+        query = """
+            INSERT INTO FILE_INFO (table_nm, file_nm, copy_yn, delete_yn)
+            VALUES (?, ?, 'N', 'N')
+            ON CONFLICT(file_nm) DO UPDATE SET
+                table_nm = excluded.table_nm,
+                copy_yn = 'N',
+                delete_yn = 'N'
+        """
+        return self.execute_non_select_query(query, (table_nm, file_nm))
+    
+    def update_file_status(self, file_name, copy_status='Y'):
+        """파일 처리 상태 업데이트 (INSERT_YN -> COPY_YN)"""
+        query = "UPDATE FILE_INFO SET COPY_YN = ? WHERE FILE_NM = ?"
+        return self.execute_non_select_query(query, (copy_status, file_name))
+    
+    def update_file_delete_status(self, file_name):
+        """파일 삭제 상태 업데이트"""
+        query = "UPDATE FILE_INFO SET DELETE_YN = 'Y' WHERE FILE_NM = ?"
+        return self.execute_non_select_query(query, (file_name,))
+    
+    def log_task(self, table_nm, file_name, start_time, error_msg=None):
+        """작업 로그 저장 (INSERT_CNT 제거)"""
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        query = """
+            INSERT INTO TASK_LOG (TABLE_NM, FILE_NM, START_TIME, END_TIME)
+            VALUES (?, ?, ?, ?)
+        """
+        return self.execute_non_select_query(query, (table_nm, file_name, start_time, current_time))
+    
+    def delete_column_mappings(self, table_nm):
+        """특정 테이블의 컬럼 매핑 정보 삭제"""
+        query = "DELETE FROM COL_MAPPING WHERE TABLE_NM = ?"
+        return self.execute_non_select_query(query, (table_nm,))
     
     # ============================================================
     # 자동화 설정 관련 함수들 (DELETE_INTERVAL 제거)
@@ -355,10 +456,19 @@ class DatabaseManager:
     # 데이터 조회 및 참조 함수들 (호환성 유지)
     # ============================================================
     def get_table_data_sample(self, table_name, limit=10):
-        """테이블 데이터 샘플 조회 (SQLite에서는 FILE_INFO 데이터 반환)"""
+        """테이블 데이터 샘플 조회 (SQLite에서는 관리 테이블 데이터 반환)"""
         if table_name in ['TABLE_INFO', 'FILE_INFO', 'AUTO_CONFIG', 'COL_MAPPING', 'TASK_LOG']:
-            query = f"SELECT * FROM {table_name} LIMIT {limit}"
-            return self.execute_query(query)
+            try:
+                query = f"SELECT * FROM {table_name} LIMIT {limit}"
+                result = self.execute_query(query)
+                # execute_query가 SELECT 쿼리에 대해 list를 반환하는지 확인
+                if isinstance(result, list):
+                    return result
+                else:
+                    return []
+            except Exception as e:
+                print(f"테이블 {table_name} 데이터 조회 오류: {e}")
+                return []
         else:
             return []
     

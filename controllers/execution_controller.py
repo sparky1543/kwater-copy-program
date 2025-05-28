@@ -171,7 +171,7 @@ class ExecutionController:
         Returns:
             list: 테이블명 목록
         """
-        if not self.db_manager or not self.is_online_mode:
+        if not self.db_manager:
             return []
         
         try:
@@ -190,7 +190,7 @@ class ExecutionController:
         Returns:
             tuple: (컬럼 목록, 데이터 행 목록)
         """
-        if not self.db_manager or not self.is_online_mode:
+        if not self.db_manager:
             return [], []
         
         try:
@@ -216,7 +216,7 @@ class ExecutionController:
         Returns:
             bool: 내보내기 성공 여부
         """
-        if not self.db_manager or not self.is_online_mode:
+        if not self.db_manager:
             return False
         
         try:
