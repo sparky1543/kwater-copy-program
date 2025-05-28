@@ -477,3 +477,56 @@ class DatabaseManager:
         query = f"PRAGMA table_info({table_name})"
         result = self.execute_query(query)
         return [(row[1], row[2]) for row in result]  # (컬럼명, 타입)
+    
+    # 추가 메서드
+
+    def get_existing_files(self, table_nm):
+        """기존에 등록된 파일 목록 조회 (호환성용)
+        
+        Args:
+            table_nm (str): 테이블명
+            
+        Returns:
+            set: 파일명 집합
+        """
+        query = "SELECT file_nm FROM FILE_INFO WHERE table_nm = ?"
+        result = self.execute_query(query, (table_nm,))
+        return {row[0] for row in result}
+
+    def get_pending_files_count(self, table_nm):
+        """처리 대기 중인 파일 수 조회 (호환성용)
+        
+        Args:
+            table_nm (str): 테이블명
+            
+        Returns:
+            int: 대기 중인 파일 수
+        """
+        query = "SELECT COUNT(*) FROM FILE_INFO WHERE table_nm = ? AND copy_yn = 'N'"
+        result = self.execute_query(query, (table_nm,))
+        return result[0][0] if result else 0
+
+    def get_all_auto_configs(self):
+        """모든 자동화 설정 정보 조회 (스케줄러용) - 호환성 개선
+        
+        Returns:
+            list: 자동화 설정 목록 [(table_nm, dest_path, auto_interval, last_timestamp), ...]
+        """
+        query = """
+            SELECT table_nm, dest_path, auto_interval, last_timestamp
+            FROM AUTO_CONFIG 
+            WHERE auto_interval IS NOT NULL AND auto_interval > 0
+        """
+        return self.execute_query(query)
+
+    def update_file_copy_status(self, file_name, copy_status='Y'):
+        """파일 복사 상태 업데이트 (호환성용 - update_file_status와 동일)
+        
+        Args:
+            file_name (str): 파일명
+            copy_status (str): 복사 상태 ('Y' 또는 'N')
+            
+        Returns:
+            int: 영향받은 행 수
+        """
+        return self.update_file_status(file_name, copy_status)
