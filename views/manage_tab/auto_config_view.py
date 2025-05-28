@@ -93,7 +93,7 @@ class AutoConfigView:
         self.entry_auto_interval = tk.Entry(frame_fields, width=40)
         self.entry_auto_interval.grid(row=3, column=1, padx=5, pady=10)
         
-        # 사용 여부 입력 (DELETE_INTERVAL 제거됨)
+        # 사용 여부 입력
         tk.Label(frame_fields, text="USE_YN :").grid(row=4, column=0, sticky="w", pady=10)
         self.entry_use_yn = tk.Entry(frame_fields, width=40)
         self.entry_use_yn.grid(row=4, column=1, padx=5, pady=10)
@@ -150,12 +150,6 @@ class AutoConfigView:
             for table_nm in table_list:
                 self.listbox_tables.insert(tk.END, table_nm)
             
-            # 첫 번째 항목 자동 선택
-            if self.listbox_tables.size() > 0:
-                self.listbox_tables.selection_set(0)
-                self.listbox_tables.activate(0)
-                self.listbox_tables.event_generate("<<ListboxSelect>>")
-                self.on_table_selected()
         except Exception as e:
             messagebox.showerror("오류", f"테이블 목록 로드 중 오류 발생: {str(e)}")
     
@@ -179,20 +173,28 @@ class AutoConfigView:
             # 입력 필드 초기화
             self.clear_fields()
             
-            # 조회 결과가 있으면 입력 필드에 표시 (DELETE_INTERVAL 제거됨)
+            # 조회 결과가 있으면 입력 필드에 표시
             if config:
-                src_path, dest_path, auto_interval, use_yn = config
-                
-                self.entry_table_nm.insert(0, table_nm)
-                self.entry_src_path.insert(0, src_path or "")
-                self.entry_dest_path.insert(0, dest_path or "")
-                
-                if auto_interval is not None:
-                    self.entry_auto_interval.insert(0, str(auto_interval))
-                
-                self.entry_use_yn.insert(0, use_yn or "Y")
+                # config 튜플의 길이에 따라 처리
+                if len(config) >= 4:
+                    src_path, dest_path, auto_interval, use_yn = config[:4]
+                    
+                    self.entry_table_nm.insert(0, table_nm)
+                    self.entry_src_path.insert(0, src_path or "")
+                    self.entry_dest_path.insert(0, dest_path or "")
+                    
+                    if auto_interval is not None:
+                        self.entry_auto_interval.insert(0, str(auto_interval))
+                    
+                    self.entry_use_yn.insert(0, use_yn or "Y")
+                else:
+                    # 예상보다 적은 값이 반환된 경우 안전하게 처리
+                    self.entry_table_nm.insert(0, table_nm)
+                    print(f"경고: {table_nm} 테이블의 자동화 설정에서 예상보다 적은 값이 반환됨: {config}")
+                    
         except Exception as e:
             messagebox.showerror("오류", f"자동화 설정 정보 조회 중 오류 발생: {str(e)}")
+            print(f"디버그: 오류 세부사항 - {str(e)}")
     
     def clear_fields(self):
         """입력 필드 초기화"""
@@ -225,7 +227,7 @@ class AutoConfigView:
             messagebox.showwarning("경고", "스케줄러가 실행 중입니다.\n중단 후 다시 시도해주세요.")
             return
             
-        # 입력값 가져오기 (DELETE_INTERVAL 제거됨)
+        # 입력값 가져오기
         table_nm = self.entry_table_nm.get().strip()
         src_path = self.entry_src_path.get().strip()
         dest_path = self.entry_dest_path.get().strip()
@@ -243,7 +245,7 @@ class AutoConfigView:
             return
         
         try:
-            # 자동화 설정 저장 (DELETE_INTERVAL 제거됨)
+            # 자동화 설정 저장
             success = self.settings_controller.save_auto_config(
                 table_nm,
                 src_path,

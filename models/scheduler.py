@@ -244,7 +244,14 @@ class SchedulerManager:
             config = self.db_manager.get_auto_config_details(table_nm)
             if not config:
                 return
-            src_path, dest_path, auto_interval, _, use_yn = config[:5]
+            
+            # config 튜플의 길이에 따라 안전하게 처리
+            if len(config) >= 4:
+                src_path, dest_path, auto_interval, use_yn = config[:4]
+            else:
+                self.log(f"[{table_nm}] 자동화 설정 데이터가 부족합니다: {config}", 'warning')
+                return
+                
             if use_yn and use_yn.upper() == 'N':
                 return
                 
@@ -548,8 +555,13 @@ class SchedulerManager:
             config = self.db_manager.get_auto_config_details(table_nm)
             if not config or not self.scheduler_running:
                 return
-                
-            src_path, dest_path, _, use_yn = config
+            
+            # config 튜플의 길이에 따라 안전하게 처리
+            if len(config) >= 4:
+                src_path, dest_path, auto_interval, use_yn = config[:4]
+            else:
+                self.log(f"[{table_nm}] 자동화 설정 데이터가 부족합니다: {config}", 'warning')
+                return
             
             # 테이블 사용 여부 확인
             if use_yn and use_yn.upper() == 'N':
@@ -568,7 +580,7 @@ class SchedulerManager:
                     self.process_table(table_nm, skip_file_discovery=True)
                     
             except Exception as e:
-                self.log(f"[{table_nm}] 발견 또는 복사 작업 오러: {e}", 'error')
+                self.log(f"[{table_nm}] 발견 또는 복사 작업 오류: {e}", 'error')
                 
         except Exception as e:
             self.log(f"[{table_nm}] 독립 처리 오류: {e}", 'error')
