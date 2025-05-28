@@ -26,10 +26,6 @@ class OnlineRunView:
         self.progress_indicators = {}
         self.progress_data = {}
         
-        # 테이블별 파일 개수 추적
-        self.table_file_counts = {}
-        self.table_current_file_index = {}
-        
         # 콜백 설정
         self.execution_controller.set_callbacks(
             progress_callback=self.update_progress,
@@ -232,28 +228,6 @@ class OnlineRunView:
         if total is None:
             total = 100
             
-        # 테이블별 파일 개수 관리
-        if table_nm not in self.table_file_counts:
-            # 해당 테이블의 총 파일 개수 조회
-            try:
-                pending_files = self.execution_controller.db_manager.get_pending_files(table_nm)
-                self.table_file_counts[table_nm] = len(pending_files) if pending_files else 1
-                self.table_current_file_index[table_nm] = 0
-            except:
-                self.table_file_counts[table_nm] = 1
-                self.table_current_file_index[table_nm] = 0
-        
-        # 파일 순서 업데이트
-        if status == "진행 중" and current == 0:  # 새 파일 시작
-            if table_nm in self.table_current_file_index:
-                self.table_current_file_index[table_nm] += 1
-            else:
-                self.table_current_file_index[table_nm] = 1
-        
-        # 현재 파일 순서 및 총 파일 수
-        current_file_num = self.table_current_file_index.get(table_nm, 1)
-        total_files = self.table_file_counts.get(table_nm, 1)
-        
         # 진행률 계산 (0-100%) - None 체크 추가
         try:
             progress_value = min(100, max(0, int(current) if current is not None else 0))
@@ -286,11 +260,6 @@ class OnlineRunView:
             indicator_width = int(bar_width * (progress_value / 100))
             progress_inner.config(width=indicator_width, bg=color)
             
-            # 파일 순서 텍스트 업데이트
-            if key in self.progress_data and "file_order_label" in self.progress_data[key]:
-                file_order_label = self.progress_data[key]["file_order_label"]
-                file_order_label.config(text=f"({current_file_num}/{total_files})")
-            
             # 데이터 상태 업데이트
             self.progress_data[key].update({
                 "current": current if current is not None else 0,
@@ -317,9 +286,9 @@ class OnlineRunView:
             progress_inner = tk.Frame(progress_outer, width=indicator_width, height=18, bg=color)
             progress_inner.place(x=0, y=0, anchor="nw")
             
-            # 파일 순서 텍스트 라벨
-            lbl_file_order = tk.Label(frame, text=f"({current_file_num}/{total_files})", bg="white")
-            lbl_file_order.pack(side="left", padx=2)
+            # 진행률 텍스트 라벨 (0~100% 표시)
+            lbl_progress = tk.Label(frame, text=f"{progress_value}%", bg="white")
+            lbl_progress.pack(side="left", padx=2)
             
             # 상태 표시 라벨
             lbl_status = tk.Label(frame, text=status, width=10, anchor="e", bg="white", fg=text_color)
@@ -340,11 +309,16 @@ class OnlineRunView:
                 "current": current if current is not None else 0,
                 "total": total if total is not None else 100,
                 "progress": progress_value,
-                "file_order_label": lbl_file_order
+                "progress_label": lbl_progress
             }
             
             # 크기 변경 이벤트 처리
             progress_outer.bind("<Configure>", lambda e, k=key: self.on_progress_bar_resize(e, k))
+        
+        # 진행률 라벨 업데이트 (기존 항목인 경우)
+        if key in self.progress_data and "progress_label" in self.progress_data[key]:
+            progress_label = self.progress_data[key]["progress_label"]
+            progress_label.config(text=f"{progress_value}%")
         
         # 스크롤 영역 업데이트
         self.parent.update_idletasks()
