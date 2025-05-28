@@ -61,17 +61,26 @@ class DatabaseManager:
                 )
             ''')
             
-            # TASK_LOG 테이블 생성 (INSERT_CNT 제거)
+            # TASK_LOG 테이블 생성 (ERROR_MSG 컬럼 추가)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS TASK_LOG (
                     TABLE_NM TEXT NOT NULL,
                     FILE_NM TEXT NOT NULL,
                     START_TIME TEXT,
                     END_TIME TEXT,
+                    ERROR_MSG TEXT,
                     FOREIGN KEY (TABLE_NM) REFERENCES TABLE_INFO (TABLE_NM),
                     FOREIGN KEY (FILE_NM) REFERENCES FILE_INFO (FILE_NM)
                 )
             ''')
+            
+            # 기존 테이블에 ERROR_MSG 컬럼이 없는 경우 추가
+            try:
+                cursor.execute('ALTER TABLE TASK_LOG ADD COLUMN ERROR_MSG TEXT')
+                print("TASK_LOG 테이블에 ERROR_MSG 컬럼을 추가했습니다.")
+            except Exception:
+                # 컬럼이 이미 존재하는 경우 무시
+                pass
             
             conn.commit()
             print("SQLite 데이터베이스 초기화 완료")
@@ -267,14 +276,24 @@ class DatabaseManager:
         return self.execute_non_select_query(query, (file_name,))
     
     def log_task(self, table_nm, file_name, start_time, error_msg=None):
-        """작업 로그 저장 (INSERT_CNT 제거)"""
+        """작업 로그 저장 (ERROR_MSG 포함)
+        
+        Args:
+            table_nm (str): 테이블명
+            file_name (str): 파일명
+            start_time (str): 시작 시간
+            error_msg (str, optional): 오류 메시지. Defaults to None.
+            
+        Returns:
+            int: 영향받은 행 수
+        """
         current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         query = """
-            INSERT INTO TASK_LOG (TABLE_NM, FILE_NM, START_TIME, END_TIME)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO TASK_LOG (TABLE_NM, FILE_NM, START_TIME, END_TIME, ERROR_MSG)
+            VALUES (?, ?, ?, ?, ?)
         """
-        return self.execute_non_select_query(query, (table_nm, file_name, start_time, current_time))
+        return self.execute_non_select_query(query, (table_nm, file_name, start_time, current_time, error_msg))
     
     def delete_column_mappings(self, table_nm):
         """특정 테이블의 컬럼 매핑 정보 삭제"""

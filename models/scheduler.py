@@ -228,105 +228,100 @@ class SchedulerManager:
             self.log(f"즉시 실행 작업 처리 오류: {e}", 'error')
     
     def process_table(self, table_nm, skip_file_discovery=False):
-        """단일 테이블 처리 (개선된 버전)"""
-        try:
-            # 스케줄러 상태 확인
-            if not self.scheduler_running:
-                self.log(f"[{table_nm}] 스케줄러 중지됨: 작업 취소", 'warning')
-                return
-            
-            # 이미 처리 중인 테이블 확인
-            if table_nm in self.tables_in_process:
-                self.log(f"[{table_nm}] 이미 처리 중인 테이블입니다.")
-                return
-            
-            # 처리 중인 테이블 집합에 추가
-            self.tables_in_process.add(table_nm)
-            self.log(f"[{table_nm}] 테이블 처리 시작")
-            
-            # 자동화 설정 조회
-            config = self.db_manager.get_auto_config_details(table_nm)
-            
-            if not config:
-                self.log(f"[{table_nm}] 자동화 설정이 없습니다.", 'warning')
-                return
-            
-            src_path, dest_path, _, use_yn = config
-            
-            # 테이블 사용 여부 확인
-            if use_yn and use_yn.upper() == 'N':
-                self.log(f"[{table_nm}] 사용하지 않는 테이블입니다.")
-                return
-            
-            # 파일 발견 처리
-            if not skip_file_discovery:
-                self._discover_files_for_table(table_nm, src_path)
-                
-                # 중단 요청 확인
-                if not self.scheduler_running:
-                    self.log(f"[{table_nm}] 스케줄러 중지됨: 강제 종료", 'warning')
-                    return
-            
-            # 복사 대상 파일 조회
-            target_files = self.db_manager.get_pending_files(table_nm)
-            
-            if not target_files:
-                self.log(f"[{table_nm}] 복사 대상 파일이 없습니다.")
-                return
-            
-            # *** 핵심 개선: 테이블별 독립적인 SFTP 세션 생성 ***
-            self._process_table_files_with_dedicated_sessions(table_nm, src_path, dest_path, target_files)
-            
-        except Exception as e:
-            self.log(f"[{table_nm}] 처리 중 오류 발생: {e}", 'error')
-        finally:
-            # 처리 중인 테이블 집합에서 제거
-            if table_nm in self.tables_in_process:
-                self.tables_in_process.remove(table_nm)
-                self.log(f"[{table_nm}] 테이블 처리 완료")
+        """단일 테이블 처리 (잘 되던 방식으로 단순화)"""
+        # 바로 copy_table_files 호출
+        self.copy_table_files(table_nm)
     
-    def _process_table_files_with_dedicated_sessions(self, table_nm, src_path, dest_path, target_files):
-        """테이블별 독립적인 SFTP 세션으로 파일 처리 (핵심 개선 부분)"""
-        
-        # 테이블별 임시 디렉토리 생성
-        tmp_dir = tempfile.mkdtemp(prefix=f'{table_nm}_')
-        
-        # 테이블 전용 SFTP 세션 열기
-        ssh_lx, sftp_lx = None, None
-        ssh_was, sftp_was = None, None
+    def copy_table_files(self, table_nm):
+        """테이블 파일 복사 (잘 되던 방식 그대로)"""
+        if not self.scheduler_running:
+            return
+        if table_nm in self.tables_in_process:
+            return
+        self.tables_in_process.add(table_nm)
         
         try:
-            # 독립적인 SFTP 세션 생성
+            config = self.db_manager.get_auto_config_details(table_nm)
+            if not config:
+                return
+            src_path, dest_path, auto_interval, _, use_yn = config[:5]
+            if use_yn and use_yn.upper() == 'N':
+                return
+                
+            copied_any = False
+            tmp_dir = tempfile.mkdtemp(prefix=f'{table_nm}_')
             ssh_lx, sftp_lx = self.linux_ssh_client.open_sftp()
             ssh_was, sftp_was = self.was_ssh_client.open_sftp()
             
-            self.log(f"[{table_nm}] 독립적인 SFTP 세션 생성 완료")
-            
-            # WAS 서버 디렉토리 확인/생성
-            self.was_ssh_client.ensure_remote_dir(sftp_was, dest_path)
-            
-            # 파일별 복사 처리 (순차적으로 처리)
-            total_files = len(target_files)
-            current_index = 0
-            
-            for file_name, _ in target_files:
-                if not self.scheduler_running:
-                    break
+            try:
+                self.was_ssh_client.ensure_remote_dir(sftp_was, dest_path)
+                remote_files = self.linux_ssh_client.list_files_by_pattern(src_path, table_nm)
+                existing = self.db_manager.get_existing_files(table_nm)
                 
-                current_index += 1
-                self._process_single_file_with_sessions(
-                    table_nm, file_name, src_path, dest_path, tmp_dir,
-                    sftp_lx, sftp_was, current_index, total_files
-                )
+                for f in remote_files:
+                    if f not in existing:
+                        self.db_manager.register_file(table_nm, f)
+
+                pending = self.db_manager.get_pending_files(table_nm)
+                total = len(pending)
+                index = 0
+
+                for file_name, _ in pending:
+                    if not self.scheduler_running:
+                        break
+
+                    index += 1
+                    self.current_processing_files[table_nm] = file_name
+                    
+                    if self.progress_update_callback:
+                        self.progress_update_callback(table_nm, file_name, '진행 중', 0, 100)
+
+                    status = '완료'
+                    error_msg = None
+                    start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    try:
+                        # 잘 되던 방식 그대로
+                        dl = self.linux_ssh_client.download_with_sftp(sftp_lx, src_path, tmp_dir, file_name)
+                        if not dl:
+                            raise Exception('download failed')
+
+                        up = self.was_ssh_client.upload_with_sftp(sftp_was, tmp_dir, dest_path, file_name)
+                        if not up:
+                            raise Exception('upload failed')
+
+                        self.db_manager.update_file_status(file_name, 'Y')
+                        self.db_manager.log_task(table_nm, file_name, start_time, None)  # 성공시 error_msg=None
+                        copied_any = True
+                        
+                    except Exception as e:
+                        status = '실패'
+                        error_msg = str(e)
+                        self.db_manager.update_file_status(file_name, 'N')
+                        self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
+                        self.log(f"[{table_nm}] 파일 복사 오류: {e}", 'error')
+                        
+                    finally:
+                        if self.progress_update_callback:
+                            self.progress_update_callback(table_nm, file_name, status, 100, 100)
+                        
+                        # 현재 처리 중인 파일 정보 제거
+                        if table_nm in self.current_processing_files:
+                            del self.current_processing_files[table_nm]
+                            
+            finally:
+                self.linux_ssh_client.close_sftp(ssh_lx, sftp_lx)
+                self.was_ssh_client.close_sftp(ssh_was, sftp_was)
+                shutil.rmtree(tmp_dir, ignore_errors=True)
                 
+            if self.scheduler_running and copied_any:
+                self.db_manager.update_auto_config_timestamp(table_nm)
+
         except Exception as e:
-            self.log(f"[{table_nm}] SFTP 세션 처리 중 오류: {e}", 'error')
+            self.log(f"[{table_nm}] 테이블 처리 오류: {e}", 'error')
         finally:
-            # 반드시 리소스 정리
-            self.linux_ssh_client.close_sftp(ssh_lx, sftp_lx)
-            self.was_ssh_client.close_sftp(ssh_was, sftp_was)
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-            self.log(f"[{table_nm}] SFTP 세션 및 임시 디렉토리 정리 완료")
+            if table_nm in self.tables_in_process:
+                self.tables_in_process.remove(table_nm)
     
     def _process_single_file_with_sessions(self, table_nm, file_name, src_path, dest_path, tmp_dir, 
                                          sftp_lx, sftp_was, current_index, total_files):
@@ -348,51 +343,53 @@ class SchedulerManager:
         try:
             # 중단 요청 확인
             if not self.scheduler_running:
+                error_msg = "스케줄러 중지로 인한 작업 취소"
                 self.log(f"[{table_nm}] 스케줄러 중지됨: 강제 종료", 'warning')
                 if self.progress_update_callback:
                     self.progress_update_callback(table_nm, file_name, "실패", 0, 100)
-                self.db_manager.log_task(table_nm, file_name, start_time)
+                self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
                 return
             
             # 진행률 25% 업데이트 (다운로드 시작)
             if self.progress_update_callback:
                 self.progress_update_callback(table_nm, file_name, "진행 중", 25, 100)
             
-            # Step 1: Linux 서버에서 임시 디렉토리로 다운로드
-            download_success = self.linux_ssh_client.download_with_sftp(
+            # Step 1: Linux 서버에서 임시 디렉토리로 다운로드 (잘 되던 방식)
+            dl = self.linux_ssh_client.download_with_sftp(
                 sftp_lx, src_path, tmp_dir, file_name
             )
-            
-            if not download_success:
+            if not dl:
+                error_msg = "download failed"
                 self.log(f"[{table_nm}] Linux 서버에서 다운로드 실패: {file_name}", 'error')
                 if self.progress_update_callback:
                     self.progress_update_callback(table_nm, file_name, "실패", 25, 100)
-                self.db_manager.log_task(table_nm, file_name, start_time)
+                self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
                 return
             
             # 중단 요청 확인
             if not self.scheduler_running:
+                error_msg = "스케줄러 중지로 인한 작업 취소 (업로드 단계)"
                 self.log(f"[{table_nm}] 스케줄러 중지됨: 강제 종료", 'warning')
                 if self.progress_update_callback:
                     self.progress_update_callback(table_nm, file_name, "실패", 50, 100)
-                self.db_manager.log_task(table_nm, file_name, start_time)
+                self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
                 return
             
             # 진행률 75% 업데이트 (업로드 시작)
             if self.progress_update_callback:
                 self.progress_update_callback(table_nm, file_name, "진행 중", 75, 100)
             
-            # Step 2: 임시 디렉토리에서 WAS 서버로 업로드
-            upload_success = self.was_ssh_client.upload_with_sftp(
+            # Step 2: 임시 디렉토리에서 WAS 서버로 업로드 (잘 되던 방식)
+            up = self.was_ssh_client.upload_with_sftp(
                 sftp_was, tmp_dir, dest_path, file_name
             )
             
-            if upload_success:
+            if up:
                 # 복사 성공 시 파일 상태 업데이트
                 self.db_manager.update_file_status(file_name, 'Y')
                 
-                # 작업 로그 저장
-                self.db_manager.log_task(table_nm, file_name, start_time)
+                # 작업 로그 저장 (성공 시 error_msg는 None)
+                self.db_manager.log_task(table_nm, file_name, start_time, None)
                 
                 self.log(f"[{table_nm}] 파일 복사 완료: {file_name}")
                 
@@ -405,17 +402,18 @@ class SchedulerManager:
                 # 업로드 실패 시 파일 상태 업데이트
                 self.db_manager.update_file_status(file_name, 'N')
                 
+                error_msg = "upload failed"
                 self.log(f"[{table_nm}] WAS 서버로 업로드 실패: {file_name}", 'error')
                 
                 # 진행 상태 실패로 업데이트
                 if self.progress_update_callback:
                     self.progress_update_callback(table_nm, file_name, "실패", 75, 100)
                 
-                # 작업 로그 저장
-                self.db_manager.log_task(table_nm, file_name, start_time)
+                # 작업 로그 저장 (실패 시 error_msg 포함)
+                self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
             
         except Exception as e:
-            error_msg = str(e)
+            error_msg = f"파일 복사 중 예외 발생: {str(e)}"
             self.log(f"[{table_nm}] 파일 복사 중 오류 발생: {error_msg}", 'error')
             
             # 오류 발생 시 파일 상태 업데이트
@@ -425,8 +423,8 @@ class SchedulerManager:
             if self.progress_update_callback:
                 self.progress_update_callback(table_nm, file_name, "실패", 0, 100)
             
-            # 작업 로그 저장
-            self.db_manager.log_task(table_nm, file_name, start_time)
+            # 작업 로그 저장 (오류 메시지 포함)
+            self.db_manager.log_task(table_nm, file_name, start_time, error_msg)
         
         finally:
             # 처리 완료된 파일 정보 제거
@@ -473,7 +471,7 @@ class SchedulerManager:
             raise
     
     def process_tables_parallel(self, table_names, skip_file_discovery=False):
-        """여러 테이블 병렬 처리"""
+        """여러 테이블 병렬 처리 (잘 되던 방식)"""
         try:
             self.log(f"병렬 파일 복사 작업 시작: {table_names}")
             
@@ -489,10 +487,10 @@ class SchedulerManager:
                 
             self.log(f"실제 처리할 테이블: {tables_to_process}")
             
-            # 스레드풀을 사용한 병렬 처리
+            # 스레드풀을 사용한 병렬 처리 (잘 되던 방식)
             with ThreadPoolExecutor(max_workers=min(5, len(tables_to_process))) as executor:
                 future_to_table = {
-                    executor.submit(self.process_table, table_nm, skip_file_discovery): table_nm 
+                    executor.submit(self.copy_table_files, table_nm): table_nm 
                     for table_nm in tables_to_process
                 }
                 
