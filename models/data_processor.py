@@ -104,7 +104,7 @@ class DataProcessor:
             Exception: 파일 저장 중 오류 발생 시 예외 발생
         """
         try:
-            # 디렉토리 확인 및 생성
+            # 디렉토리 확인 및 생성 (로컬 경로이므로 os.path 사용)
             directory = os.path.dirname(file_path)
             if directory and not os.path.exists(directory):
                 os.makedirs(directory, exist_ok=True)

@@ -1,0 +1,41 @@
+2025-05-29 09:01:49,410 [INFO] - root - 애플리케이션 시작
+2025-05-29 09:01:49,410 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-29 09:01:49,426 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-29 09:14:02,815 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:14:02,849 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:14:02,861 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:14:02,879 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:14:03,785 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:14:03,811 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:14:03,817 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:14:03,837 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:15:05,049 [INFO] - apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-05-29 09:15:05,049 [INFO] - SchedulerManager - 1분 간격 COPY 작업 설정: rsvdy
+2025-05-29 09:15:05,049 [INFO] - apscheduler.scheduler - Added job "SchedulerManager.process_tables_parallel" to job store "default"
+2025-05-29 09:15:05,049 [INFO] - apscheduler.scheduler - Scheduler started
+2025-05-29 09:15:05,050 [INFO] - SchedulerManager - 스케줄러가 시작되었습니다.
+2025-05-29 09:15:05,051 [INFO] - SchedulerManager - 파일 발견 후 COPY 작업 실행: rsvdy
+2025-05-29 09:15:05,051 [INFO] - SchedulerManager - [파일 발견 후 복사] 작업 시작: ['rsvdy']
+2025-05-29 09:15:05,052 [INFO] - SchedulerManager - [rsvdy] 파일 발견 후 복사 독립 처리 시작
+2025-05-29 09:15:05,053 [INFO] - SchedulerManager - [rsvdy] 파일 발견 시작: /media/sf_Data/rsvdy/
+2025-05-29 09:15:05,062 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:15:05,082 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:15:05,129 [INFO] - paramiko.transport.sftp - [chan 0] Opened sftp connection (server version 3)
+2025-05-29 09:15:05,132 [INFO] - paramiko.transport.sftp - [chan 0] sftp session closed.
+2025-05-29 09:15:05,132 [INFO] - SchedulerManager - [rsvdy] 원격 디렉토리 파일 수: 3
+2025-05-29 09:15:05,133 [INFO] - SchedulerManager - [rsvdy] 새로 발견된 파일 수: 3
+2025-05-29 09:15:05,138 [INFO] - SchedulerManager - [rsvdy] FILE_INFO 테이블 업데이트 완료: rsvdy_01.xml
+2025-05-29 09:15:05,143 [INFO] - SchedulerManager - [rsvdy] FILE_INFO 테이블 업데이트 완료: rsvdy_02.xml
+2025-05-29 09:15:05,147 [INFO] - SchedulerManager - [rsvdy] FILE_INFO 테이블 업데이트 완료: rsvdy_03.xml
+2025-05-29 09:15:05,163 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:15:05,175 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:15:05,213 [INFO] - paramiko.transport.sftp - [chan 0] Opened sftp connection (server version 3)
+2025-05-29 09:15:05,224 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:15:05,254 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:15:05,293 [INFO] - paramiko.transport.sftp - [chan 0] Opened sftp connection (server version 3)
+2025-05-29 09:15:05,300 [INFO] - paramiko.transport - Connected (version 2.0, client OpenSSH_9.6p1)
+2025-05-29 09:15:05,312 [INFO] - paramiko.transport - Authentication (password) successful!
+2025-05-29 09:15:05,348 [INFO] - paramiko.transport.sftp - [chan 0] Opened sftp connection (server version 3)
+2025-05-29 09:15:05,350 [INFO] - paramiko.transport.sftp - [chan 0] sftp session closed.
+2025-05-29 09:15:08,431 [INFO] - paramiko.transport.sftp - [chan 0] sftp session closed.
+2025-05-29 09:15:08,432 [INFO] - paramiko.transport.sftp - [chan 0] sftp session closed.

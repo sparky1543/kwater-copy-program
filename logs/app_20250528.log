@@ -2051,3 +2051,10 @@ ImportError: cannot import name 'DatabaseManager' from 'models.database' (C:\pro
 2025-05-28 16:17:06,274 [INFO] - root - 애플리케이션 시작
 2025-05-28 16:17:06,277 [INFO] - root - SQLite 버전: 3.45.3
 2025-05-28 16:17:06,278 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 17:34:08,232 [INFO] - root - 애플리케이션 시작
+2025-05-28 17:34:08,234 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 17:34:08,235 [INFO] - root - SQLite 연결 테스트 성공
+2025-05-28 17:34:12,222 [INFO] - root - 애플리케이션 종료
+2025-05-28 17:34:12,470 [INFO] - root - 애플리케이션 시작
+2025-05-28 17:34:12,472 [INFO] - root - SQLite 버전: 3.45.3
+2025-05-28 17:34:12,473 [INFO] - root - SQLite 연결 테스트 성공

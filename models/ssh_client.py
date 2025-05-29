@@ -108,7 +108,8 @@ class SSHClient:
     def download_with_sftp(self, sftp, remote_path, local_path, file_name):
         """기존 SFTP 세션을 사용한 파일 다운로드 (잘 되던 단순 버전)"""
         os.makedirs(local_path, exist_ok=True)
-        remote_file = os.path.join(remote_path, file_name)
+        # 원격 경로는 항상 Unix 스타일 슬래시 사용
+        remote_file = remote_path.rstrip('/') + '/' + file_name
         local_file = os.path.join(local_path, file_name)
         if os.path.exists(local_file):
             return False
@@ -118,7 +119,8 @@ class SSHClient:
     def upload_with_sftp(self, sftp, local_path, remote_path, file_name):
         """기존 SFTP 세션을 사용한 파일 업로드 (잘 되던 단순 버전)"""
         local_file = os.path.join(local_path, file_name)
-        remote_file = os.path.join(remote_path, file_name)
+        # 원격 경로는 항상 Unix 스타일 슬래시 사용
+        remote_file = remote_path.rstrip('/') + '/' + file_name
         if not os.path.exists(local_file):
             return False
         self.ensure_remote_dir(sftp, remote_path)
@@ -206,8 +208,9 @@ class SSHClient:
             sftp.stat(remote_path)
             return
         except IOError:
-            parent = os.path.dirname(remote_path)
-            if parent:
+            # 부모 디렉토리 경로도 Unix 스타일로 처리
+            parent = '/'.join(remote_path.rstrip('/').split('/')[:-1])
+            if parent and parent != remote_path:
                 self._mkdir_p(sftp, parent)
             try:
                 sftp.mkdir(remote_path)
